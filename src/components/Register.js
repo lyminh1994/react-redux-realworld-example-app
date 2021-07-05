@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { connect } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 
 import agent from "../agent";
@@ -10,49 +10,41 @@ import {
 } from "../constants/actionTypes";
 import ListErrors from "./ListErrors";
 
-const mapStateToProps = (state) => ({ ...state.auth });
+const Register = () => {
+  const dispatch = useDispatch();
+  const { email, password, username, errors, inProgress } = useSelector(
+    (state) => state.auth
+  );
 
-const mapDispatchToProps = (dispatch) => ({
-  onChangeEmail: (value) =>
-    dispatch({ type: UPDATE_FIELD_AUTH, key: "email", value }),
-  onChangePassword: (value) =>
-    dispatch({ type: UPDATE_FIELD_AUTH, key: "password", value }),
-  onChangeUsername: (value) =>
-    dispatch({ type: UPDATE_FIELD_AUTH, key: "username", value }),
-  onSubmit: (username, email, password) => {
-    const payload = agent.Auth.register(username, email, password);
-    dispatch({ type: REGISTER, payload });
-  },
-  onUnload: () => dispatch({ type: REGISTER_PAGE_UNLOADED }),
-});
-
-const Register = ({
-  onUnload,
-  onChangeEmail,
-  onChangePassword,
-  onChangeUsername,
-  onSubmit,
-  email,
-  password,
-  username,
-  errors,
-  inProgress,
-}) => {
   useEffect(() => {
     return () => {
-      onUnload();
+      dispatch({ type: REGISTER_PAGE_UNLOADED });
     };
   }, []);
 
-  const changeEmail = (ev) => onChangeEmail(ev.target.value);
+  const changeEmail = (ev) =>
+    dispatch({ type: UPDATE_FIELD_AUTH, key: "email", value: ev.target.value });
 
-  const changePassword = (ev) => onChangePassword(ev.target.value);
+  const changePassword = (ev) =>
+    dispatch({
+      type: UPDATE_FIELD_AUTH,
+      key: "password",
+      value: ev.target.value,
+    });
 
-  const changeUsername = (ev) => onChangeUsername(ev.target.value);
+  const changeUsername = (ev) =>
+    dispatch({
+      type: UPDATE_FIELD_AUTH,
+      key: "username",
+      value: ev.target.value,
+    });
 
   const submitForm = (username, email, password) => (ev) => {
     ev.preventDefault();
-    onSubmit(username, email, password);
+    dispatch({
+      type: REGISTER,
+      payload: agent.Auth.register(username, email, password),
+    });
   };
 
   return (
@@ -115,4 +107,4 @@ const Register = ({
   );
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(Register);
+export default Register;

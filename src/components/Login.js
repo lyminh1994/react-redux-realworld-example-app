@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { connect } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 
 import agent from "../agent";
@@ -10,41 +10,30 @@ import {
 } from "../constants/actionTypes";
 import ListErrors from "./ListErrors";
 
-const mapStateToProps = (state) => ({ ...state.auth });
-
-const mapDispatchToProps = (dispatch) => ({
-  onChangeEmail: (value) =>
-    dispatch({ type: UPDATE_FIELD_AUTH, key: "email", value }),
-  onChangePassword: (value) =>
-    dispatch({ type: UPDATE_FIELD_AUTH, key: "password", value }),
-  onSubmit: (email, password) =>
-    dispatch({ type: LOGIN, payload: agent.Auth.login(email, password) }),
-  onUnload: () => dispatch({ type: LOGIN_PAGE_UNLOADED }),
-});
-
-const Login = ({
-  onUnload,
-  onChangeEmail,
-  onChangePassword,
-  onSubmit,
-  email,
-  password,
-  errors,
-  inProgress,
-}) => {
+const Login = () => {
+  const dispatch = useDispatch();
+  const { email, password, errors, inProgress } = useSelector(
+    (state) => state.auth
+  );
   useEffect(() => {
     return () => {
-      onUnload();
+      dispatch({ type: LOGIN_PAGE_UNLOADED });
     };
   }, []);
 
-  const changeEmail = (ev) => onChangeEmail(ev.target.value);
+  const changeEmail = (ev) =>
+    dispatch({ type: UPDATE_FIELD_AUTH, key: "email", value: ev.target.value });
 
-  const changePassword = (ev) => onChangePassword(ev.target.value);
+  const changePassword = (ev) =>
+    dispatch({
+      type: UPDATE_FIELD_AUTH,
+      key: "password",
+      value: ev.target.value,
+    });
 
   const submitForm = (email, password) => (ev) => {
     ev.preventDefault();
-    onSubmit(email, password);
+    dispatch({ type: LOGIN, payload: agent.Auth.login(email, password) });
   };
 
   return (
@@ -97,4 +86,4 @@ const Login = ({
   );
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(Login);
+export default Login;

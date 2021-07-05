@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
-import { connect } from "react-redux";
-import { Route, Switch } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { Route, Switch, useHistory } from "react-router-dom";
 
 import agent from "./agent";
 import { APP_LOAD } from "./constants/actionTypes";
@@ -14,28 +14,28 @@ import ProfileFavorites from "./components/ProfileFavorites";
 import Register from "./components/Register";
 import Settings from "./components/Settings";
 
-const mapStateToProps = (state) => {
-  return {
-    appLoaded: state.common.appLoaded,
-    appName: state.common.appName,
-    currentUser: state.common.currentUser,
-    redirectTo: state.common.redirectTo,
-  };
-};
+const App = () => {
+  const history = useHistory();
+  const dispatch = useDispatch();
+  const { appLoaded, appName, currentUser, redirectTo } = useSelector(
+    (state) => state.common
+  );
 
-const mapDispatchToProps = (dispatch) => ({
-  onLoad: (payload, token) =>
-    dispatch({ type: APP_LOAD, payload, token, skipTracking: true }),
-});
+  useEffect(() => {
+    if (redirectTo) history.push(redirectTo);
+  }, [redirectTo]);
 
-const App = ({ onLoad, appLoaded, appName, currentUser }) => {
   useEffect(() => {
     const token = localStorage.getItem("jwt");
     if (token) {
       agent.setToken(token);
     }
-
-    onLoad(token ? agent.Auth.current() : null, token);
+    dispatch({
+      type: APP_LOAD,
+      payload: token ? agent.Auth.current() : null,
+      token,
+      skipTracking: true,
+    });
   }, []);
 
   if (appLoaded) {
@@ -63,4 +63,4 @@ const App = ({ onLoad, appLoaded, appName, currentUser }) => {
   );
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(App);
+export default App;

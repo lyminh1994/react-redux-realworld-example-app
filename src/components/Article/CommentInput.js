@@ -1,24 +1,23 @@
 import React, { useState } from "react";
-import { connect } from "react-redux";
+import { useDispatch } from "react-redux";
 
 import agent from "../../agent";
 import { ADD_COMMENT } from "../../constants/actionTypes";
 
-const mapDispatchToProps = (dispatch) => ({
-  onSubmit: (payload) => dispatch({ type: ADD_COMMENT, payload }),
-});
-
-const CommentInput = ({ slug, onSubmit, currentUser }) => {
+const CommentInput = ({ slug, currentUser }) => {
+  const dispatch = useDispatch();
   const [body, setBody] = useState("");
 
   const createComment = (ev) => {
     ev.preventDefault();
-    const payload = agent.Comments.create(slug, {
-      body,
-    });
 
     setBody("");
-    onSubmit(payload);
+    dispatch({
+      type: ADD_COMMENT,
+      payload: agent.Comments.create(slug, {
+        body,
+      }),
+    });
   };
 
   return (
@@ -27,7 +26,7 @@ const CommentInput = ({ slug, onSubmit, currentUser }) => {
         <textarea
           className="form-control"
           placeholder="Write a comment..."
-          value={this.state.body}
+          value={body}
           onChange={(ev) => {
             setBody(ev.target.value);
           }}
@@ -48,4 +47,4 @@ const CommentInput = ({ slug, onSubmit, currentUser }) => {
   );
 };
 
-export default connect(() => ({}), mapDispatchToProps)(CommentInput);
+export default CommentInput;

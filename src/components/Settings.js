@@ -1,5 +1,5 @@
-import React from "react";
-import { connect } from "react-redux";
+import React, { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 
 import agent from "../agent";
 import {
@@ -10,19 +10,17 @@ import {
 import ListErrors from "./ListErrors";
 import SettingsForm from "./SettingsForm";
 
-const mapStateToProps = (state) => ({
-  ...state.settings,
-  currentUser: state.common.currentUser,
-});
+const Settings = () => {
+  const dispatch = useDispatch();
+  const { currentUser } = useSelector((state) => state.common);
+  const { errors } = useSelector((state) => state.settings);
 
-const mapDispatchToProps = (dispatch) => ({
-  onClickLogout: () => dispatch({ type: LOGOUT }),
-  onSubmitForm: (user) =>
-    dispatch({ type: SETTINGS_SAVED, payload: agent.Auth.save(user) }),
-  onUnload: () => dispatch({ type: SETTINGS_PAGE_UNLOADED }),
-});
+  useEffect(() => {
+    return () => {
+      dispatch({ type: SETTINGS_PAGE_UNLOADED });
+    };
+  }, []);
 
-const Settings = ({ errors, currentUser, onSubmitForm, onClickLogout }) => {
   return (
     <div className="settings-page">
       <div className="container page">
@@ -34,12 +32,22 @@ const Settings = ({ errors, currentUser, onSubmitForm, onClickLogout }) => {
 
             <SettingsForm
               currentUser={currentUser}
-              onSubmitForm={onSubmitForm}
+              onSubmitForm={(currentUser) => {
+                dispatch({
+                  type: SETTINGS_SAVED,
+                  payload: agent.Auth.save(currentUser),
+                });
+              }}
             />
 
             <hr />
 
-            <button className="btn btn-outline-danger" onClick={onClickLogout}>
+            <button
+              className="btn btn-outline-danger"
+              onClick={() => {
+                dispatch({ type: LOGOUT });
+              }}
+            >
               Or click here to logout.
             </button>
           </div>
@@ -49,4 +57,4 @@ const Settings = ({ errors, currentUser, onSubmitForm, onClickLogout }) => {
   );
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(Settings);
+export default Settings;

@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { connect } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useRouteMatch } from "react-router-dom";
 
 import agent from "../agent";
@@ -13,50 +13,36 @@ import {
 } from "../constants/actionTypes";
 import ListErrors from "./ListErrors";
 
-const mapStateToProps = (state) => ({
-  ...state.editor,
-});
-
-const mapDispatchToProps = (dispatch) => ({
-  onAddTag: () => dispatch({ type: ADD_TAG }),
-  onLoad: (payload) => dispatch({ type: EDITOR_PAGE_LOADED, payload }),
-  onRemoveTag: (tag) => dispatch({ type: REMOVE_TAG, tag }),
-  onSubmit: (payload) => dispatch({ type: ARTICLE_SUBMITTED, payload }),
-  onUnload: () => dispatch({ type: EDITOR_PAGE_UNLOADED }),
-  onUpdateField: (key, value) =>
-    dispatch({ type: UPDATE_FIELD_EDITOR, key, value }),
-});
-
-const Editor = ({
-  onLoad,
-  onUnload,
-  onUpdateField,
-  onAddTag,
-  onRemoveTag,
-  title,
-  description,
-  body,
-  tagList,
-  articleSlug,
-  onSubmit,
-  errors,
-  tagInput,
-  inProgress,
-}) => {
+const Editor = () => {
+  const dispatch = useDispatch();
+  const {
+    title,
+    description,
+    body,
+    tagList,
+    articleSlug,
+    errors,
+    tagInput,
+    inProgress,
+  } = useSelector((state) => state.editor);
   const { params } = useRouteMatch();
 
   useEffect(() => {
     if (params.slug) {
-      onLoad(agent.Articles.get(params.slug));
+      dispatch({
+        type: EDITOR_PAGE_LOADED,
+        payload: agent.Articles.get(params.slug),
+      });
     }
-    onLoad(null);
+    dispatch({ type: EDITOR_PAGE_LOADED, payload: null });
 
     return () => {
-      onUnload();
+      dispatch({ type: EDITOR_PAGE_UNLOADED });
     };
   }, []);
 
-  const updateFieldEvent = (key) => (ev) => onUpdateField(key, ev.target.value);
+  const updateFieldEvent = (key) => (ev) =>
+    dispatch({ type: UPDATE_FIELD_EDITOR, key, value: ev.target.value });
   const changeTitle = updateFieldEvent("title");
   const changeDescription = updateFieldEvent("description");
   const changeBody = updateFieldEvent("body");
@@ -65,12 +51,12 @@ const Editor = ({
   const watchForEnter = (ev) => {
     if (ev.keyCode === 13) {
       ev.preventDefault();
-      onAddTag();
+      dispatch({ type: ADD_TAG });
     }
   };
 
   const removeTagHandler = (tag) => () => {
-    onRemoveTag(tag);
+    dispatch({ type: REMOVE_TAG, tag });
   };
 
   const submitForm = (ev) => {
@@ -87,7 +73,7 @@ const Editor = ({
       ? agent.Articles.update(Object.assign(article, slug))
       : agent.Articles.create(article);
 
-    onSubmit(promise);
+    dispatch({ type: ARTICLE_SUBMITTED, payload: promise });
   };
 
   return (
@@ -171,4 +157,4 @@ const Editor = ({
   );
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(Editor);
+export default Editor;

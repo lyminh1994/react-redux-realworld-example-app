@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
-import { connect } from "react-redux";
-import marked from "marked";
+import { useDispatch, useSelector } from "react-redux";
+import { useRouteMatch } from "react-router-dom";
 
 import agent from "../../agent";
 import {
@@ -9,47 +9,31 @@ import {
 } from "../../constants/actionTypes";
 import ArticleMeta from "./ArticleMeta";
 import CommentContainer from "./CommentContainer";
-import { useRouteMatch } from "react-router-dom";
 
-const mapStateToProps = (state) => ({
-  ...state.article,
-  currentUser: state.common.currentUser,
-});
-
-const mapDispatchToProps = (dispatch) => ({
-  onLoad: (payload) => dispatch({ type: ARTICLE_PAGE_LOADED, payload }),
-  onUnload: () => dispatch({ type: ARTICLE_PAGE_UNLOADED }),
-});
-
-const Article = ({
-  onLoad,
-  onUnload,
-  article,
-  currentUser,
-  comments,
-  commentErrors,
-}) => {
+const Article = () => {
+  const dispatch = useDispatch();
+  const { article, comments, commentErrors } = useSelector(
+    (state) => state.article
+  );
+  const currentUser = useSelector((state) => state.common.currentUser);
   const { params } = useRouteMatch();
 
   useEffect(() => {
-    onLoad(
-      Promise.all([
+    dispatch({
+      type: ARTICLE_PAGE_LOADED,
+      payload: Promise.all([
         agent.Articles.get(params.id),
         agent.Comments.forArticle(params.id),
-      ])
-    );
+      ]),
+    });
 
     return () => {
-      onUnload();
+      dispatch({ type: ARTICLE_PAGE_UNLOADED });
     };
   }, []);
 
-  const markup = {
-    __html: marked(article.body, { sanitize: true }),
-  };
-
   const canModify =
-    currentUser && currentUser.username === article.author.username;
+    currentUser && currentUser.username === "article.author.username";
 
   if (!article) {
     return null;
@@ -67,7 +51,7 @@ const Article = ({
       <div className="container page">
         <div className="row article-content">
           <div className="col-xs-12">
-            <div dangerouslySetInnerHTML={markup}></div>
+            <div>{article.body}</div>
 
             <ul className="tag-list">
               {article.tagList.map((tag) => {
@@ -98,4 +82,4 @@ const Article = ({
   );
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(Article);
+export default Article;

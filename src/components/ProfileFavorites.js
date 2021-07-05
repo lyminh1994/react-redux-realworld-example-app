@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { connect } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Link, useRouteMatch } from "react-router-dom";
 
 import agent from "../agent";
@@ -11,44 +11,28 @@ import ArticleList from "./ArticleList";
 import EditProfileSettings from "./EditProfileSettings";
 import FollowUserButton from "./FollowUserButton";
 
-const mapStateToProps = (state) => ({
-  ...state.articleList,
-  currentUser: state.common.currentUser,
-  profile: state.profile,
-});
-
-const mapDispatchToProps = (dispatch) => ({
-  onLoad: (pager, payload) =>
-    dispatch({ type: PROFILE_PAGE_LOADED, pager, payload }),
-  onUnload: () => dispatch({ type: PROFILE_PAGE_UNLOADED }),
-});
-
-const ProfileFavorites = ({
-  currentUser,
-  profile,
-  onLoad,
-  onUnload,
-  onFollow,
-  onUnfollow,
-  pager,
-  articles,
-  articlesCount,
-  currentPage,
-}) => {
+const ProfileFavorites = () => {
+  const dispatch = useDispatch();
+  const { currentUser } = useSelector((state) => state.common);
+  const profile = useSelector((state) => state.profile);
+  const { pager, articles, articlesCount, currentPage } = useSelector(
+    (state) => state.articleList
+  );
   const { params } = useRouteMatch();
   const isUser = currentUser && profile.username === currentUser.username;
 
   useEffect(() => {
-    onLoad(
-      (page) => agent.Articles.favoritedBy(params.username, page),
-      Promise.all([
+    dispatch({
+      type: PROFILE_PAGE_LOADED,
+      pager: agent.Articles.favoritedBy(params.username, pager),
+      payload: Promise.all([
         agent.Profile.get(params.username),
         agent.Articles.favoritedBy(params.username),
-      ])
-    );
+      ]),
+    });
 
     return () => {
-      onUnload();
+      dispatch({ type: PROFILE_PAGE_UNLOADED });
     };
   }, []);
 
@@ -92,12 +76,7 @@ const ProfileFavorites = ({
               <p>{profile.bio}</p>
 
               <EditProfileSettings isUser={isUser} />
-              <FollowUserButton
-                isUser={isUser}
-                user={profile}
-                follow={onFollow}
-                unfollow={onUnfollow}
-              />
+              <FollowUserButton isUser={isUser} user={profile} />
             </div>
           </div>
         </div>
@@ -121,4 +100,4 @@ const ProfileFavorites = ({
   );
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(ProfileFavorites);
+export default ProfileFavorites;
